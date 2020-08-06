@@ -1,4 +1,5 @@
 add_library(minerlib 
+    cpu_load.cpp
     cryptonight.cpp
     hash_counter.cpp
     hex_string.cpp

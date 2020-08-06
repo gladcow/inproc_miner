@@ -2,6 +2,7 @@
 #include "hex_string.h"
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <iostream>
 
 namespace stratum
 {
@@ -11,6 +12,7 @@ namespace stratum
 		status_(false), 
 		type_(Invalid)
 	{
+        std::cout << json << std::endl;
 		boost::property_tree::ptree pt;
 
 		std::istringstream is(json);

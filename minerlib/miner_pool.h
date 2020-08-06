@@ -6,6 +6,7 @@
 #include <atomic>
 #include "common.h"
 #include "hash_counter.h"
+#include "cpu_load.h"
 
 namespace stratum
 {
@@ -21,6 +22,7 @@ namespace stratum
 		void stop_current_job();
 
 		double hash_per_second() const;
+        double cpu_usage() const;
 	private:
 		static void calc(const binary& blob, uint32_t target, 
 			uint32_t start_nonce, job_callback cb, std::atomic_flag& stop, 
@@ -35,5 +37,6 @@ namespace stratum
 		unsigned thread_num_;
 		std::atomic_flag stop_flag_;
 		hash_counter hashes_;
+        mutable cpuload cpu_;
 	};
 }

@@ -35,7 +35,7 @@ namespace stratum
 		void handle_write_completed(const boost::system::error_code& err);
 
 		boost::asio::io_service io_service_;
-		boost::asio::io_service::work working_;
+		boost::asio::executor_work_guard<boost::asio::io_context::executor_type> working_;
 		boost::asio::ip::tcp::resolver resolver_;
 		boost::asio::ip::tcp::socket socket_;
 		boost::asio::streambuf request_;
@@ -48,6 +48,7 @@ namespace stratum
 		miner_pool pool_;
 		bool inited_;
 		error_callback ec_;
+        std::future<boost::asio::io_context::count_type> f_;
 	};
 
 }

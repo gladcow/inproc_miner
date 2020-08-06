@@ -19,20 +19,21 @@ namespace stratum
 	stratum_client::stratum_client(const std::string& server, const std::string& port,
 		const std::string& login, const std::string& pwd, error_callback ec) :
 		pool_(7),
-		working_(io_service_),
 		resolver_(io_service_),
 		socket_(io_service_),
 		server_(server), port_(port),
 		login_(login), pwd_(pwd),
 		inited_(false), 
+		working_(boost::asio::make_work_guard(io_service_)),
 		ec_(ec)
 	{
-		std::async(boost::bind(&boost::asio::io_service::run, &io_service_));
 		io_service_.post(boost::bind(&stratum_client::reconnect, this));
+        f_ = std::async(std::launch::async, boost::bind(&boost::asio::io_service::run, &io_service_));
 	}
 
 	stratum_client::~stratum_client()
-	{
+    {
+        working_.reset();
 		io_service_.stop();
 	}
 
@@ -162,7 +163,9 @@ namespace stratum
 					this, job.job_id(), _1, _2));
 				std::cout << pool_.hash_per_second() <<
 					" hashes per second" << std::endl;
-			}
+                std::cout << pool_.cpu_usage() <<
+                    " CPU usage" << std::endl;
+            }
 			if (job.type() == reply_parser::SubmitReply)
 			{
 				if (job.status())

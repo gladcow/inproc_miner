@@ -75,7 +75,14 @@ namespace stratum
 
 	double miner_pool::hash_per_second() const
 	{
-		return hashes_.hash_per_second();
-	}
+        return hashes_.hash_per_second();
+    }
+
+    double miner_pool::cpu_usage() const
+    {
+        double res = cpu_.usage();
+        cpu_.reset();
+        return res;
+    }
 
 }
