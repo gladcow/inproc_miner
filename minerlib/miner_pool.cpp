@@ -1,12 +1,15 @@
 #include "miner_pool.h"
 #include "mining_algorithm.h"
 #include <boost/bind.hpp>
+#include <iostream>
 
 namespace stratum
 {
 	miner_pool::miner_pool(unsigned thread_num) :
 		working_(io_service_),
-		thread_num_(thread_num)
+        thread_num_(thread_num),
+        target_cpu_usage_(0.5),
+        initial_sleep_frequency_(0.5)
 	{
 		start();
 	}
@@ -23,7 +26,8 @@ namespace stratum
 			io_service_.post(boost::bind(&miner_pool::calc, blob,
 			target, 
 			std::numeric_limits<uint32_t>::max() / thread_num_ * i, 
-			cb, std::ref(stop_flag_), std::ref(hashes_)));
+            cb, std::ref(stop_flag_), std::ref(hashes_), target_cpu_usage_,
+            std::ref(initial_sleep_frequency_)));
 		start();
 	}
 
@@ -32,21 +36,41 @@ namespace stratum
 		stop();
 	}
 
-	void miner_pool::calc(const binary& blob, uint32_t target,
-		uint32_t start_nonce, job_callback cb,
-		std::atomic_flag& stop, hash_counter& hashes)
+    void miner_pool::calc(const binary& blob, uint32_t target,
+        uint32_t start_nonce, job_callback cb,
+        std::atomic_flag& stop, hash_counter& hashes,
+        double target_cpu_usage,
+        std::atomic<double> &initial_sleep_frequency)
 	{
 		std::unique_ptr<mining_algorithm> alg =
 			mining_algorithm::factory(mining_algorithm::CRYPTONIGHT, blob,
 			target, start_nonce);
-		unsigned count = 0;
+        cpuload cpu;
+        unsigned count = 1;
+        unsigned sleep_count = 0;
+        double sleep_frequency = initial_sleep_frequency;
 		while (stop.test_and_set())
 		{
-			if (alg->process_next_nonce())
-				cb(alg->nonce(), alg->binary_res());
-			count++;
+            if (double(sleep_count) / double(count + sleep_count) < sleep_frequency) {
+                using namespace std::chrono_literals;
+                std::this_thread::sleep_for(100ms);
+                sleep_count++;
+            } else {
+                if (alg->process_next_nonce())
+                    cb(alg->nonce(), alg->binary_res());
+                count++;
+            }
+            if((count + sleep_count) % 100 == 0)
+            {
+                double current_cpu_usage = cpu.usage();
+                if ( current_cpu_usage > target_cpu_usage)
+                    sleep_frequency *= std::min(2.0, current_cpu_usage / target_cpu_usage);
+                else
+                    sleep_frequency /= std::min(1.5, target_cpu_usage / current_cpu_usage);
+            }
 		}
 		hashes.add_hashes(count);
+        initial_sleep_frequency = sleep_frequency;
 		stop.clear();
 	}
 

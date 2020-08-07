@@ -19,7 +19,7 @@ namespace stratum
 			stratum_client* client);
 
 		stratum_client(const std::string& server, const std::string& port,
-			const std::string& login, const std::string& pwd, 
+            const std::string& login, const std::string& pwd, double target_cpu_usage,
 			error_callback ec = default_error_callback);
 		~stratum_client();
 
@@ -49,6 +49,7 @@ namespace stratum
 		bool inited_;
 		error_callback ec_;
         std::future<boost::asio::io_context::count_type> f_;
+        double target_cpu_usage_;
 	};
 
 }

@@ -19,7 +19,7 @@ double cpuload::usage() const
     clock_t current_clock = clock();
     time_t used_time = (current_clock - start_clock_) / CLOCKS_PER_SEC;
     if (current_time == start_time_)
-        return 0;
+        return 0.0;
     return double(used_time) / 8.0 / double(current_time - start_time_);
 }
 

@@ -17,7 +17,8 @@ namespace stratum
 	}
 
 	stratum_client::stratum_client(const std::string& server, const std::string& port,
-		const std::string& login, const std::string& pwd, error_callback ec) :
+        const std::string& login, const std::string& pwd, double target_cpu_usage,
+        error_callback ec) :
 		pool_(7),
 		resolver_(io_service_),
 		socket_(io_service_),
@@ -25,8 +26,10 @@ namespace stratum
 		login_(login), pwd_(pwd),
 		inited_(false), 
 		working_(boost::asio::make_work_guard(io_service_)),
-		ec_(ec)
+        ec_(ec),
+        target_cpu_usage_(target_cpu_usage)
 	{
+        pool_.set_target_cpu_usage(target_cpu_usage_);
 		io_service_.post(boost::bind(&stratum_client::reconnect, this));
         f_ = std::async(std::launch::async, boost::bind(&boost::asio::io_service::run, &io_service_));
 	}
@@ -158,7 +161,7 @@ namespace stratum
 				(job.type() == reply_parser::NewJob))
 			{
 				std::cout << "New job detected" << std::endl;
-				pool_.set_job(job.blob(), job.target(),
+                pool_.set_job(job.blob(), job.target(),
 					boost::bind(&stratum_client::handle_job_succeeded, 
 					this, job.job_id(), _1, _2));
 				std::cout << pool_.hash_per_second() <<
