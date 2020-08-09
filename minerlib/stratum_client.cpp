@@ -38,6 +38,7 @@ namespace stratum
     {
         working_.reset();
 		io_service_.stop();
+        std::cout << "stop miner" << std::endl;
 	}
 
 	void stratum_client::async_reconnect()

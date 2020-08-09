@@ -7,6 +7,7 @@ add_library(minerlib
     miner_pool.cpp
     mining_algorithm.cpp
     stratum_client.cpp)
+set_target_properties(minerlib PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_include_directories(minerlib PUBLIC ./)
 target_include_directories(minerlib INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
